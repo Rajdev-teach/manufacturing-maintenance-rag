@@ -1,0 +1,2 @@
+"""Manufacturing maintenance RAG assistant."""
+
