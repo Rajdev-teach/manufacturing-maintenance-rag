@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import re
+import time
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -66,33 +67,50 @@ class LocalRAG:
             ranked.append(SearchResult(chunk, score))
         return sorted(ranked, key=lambda item: item.score, reverse=True)[: k or self.top_k]
 
-    def ask(self, question: str, history: list[tuple[str, str]] | None = None) -> dict:
+    def ask(
+        self, question: str, history: list[tuple[str, str]] | None = None, top_k: int | None = None
+    ) -> dict:
+        response, _ = self.ask_with_timings(question, history, top_k)
+        return response
+
+    def ask_with_timings(
+        self, question: str, history: list[tuple[str, str]] | None = None, top_k: int | None = None
+    ) -> tuple[dict, dict[str, float]]:
+        zero = {"retrieval_ms": 0.0, "generation_ms": 0.0}
         normalized = question.strip().lower()
         if not normalized or len(question) > 1000:
-            return {"answer": "Please enter a question between 1 and 1,000 characters.", "sources": []}
+            return {"answer": "Please enter a question between 1 and 1,000 characters.", "sources": []}, zero
         if any(pattern in normalized for pattern in BLOCKED_PATTERNS):
-            return {"answer": "I can only answer questions from the maintenance knowledge base.", "sources": []}
+            return {"answer": "I can only answer questions from the maintenance knowledge base.", "sources": []}, zero
         expanded = question
         if history and re.search(r"\b(it|that|those|they|second one|first one)\b", normalized):
             expanded = f"Previous topic: {history[-1][0]}. Follow-up: {question}"
-        results = [result for result in self.search(expanded) if result.score >= 0.09]
+        retrieval_start = time.perf_counter()
+        results = [result for result in self.search(expanded, top_k) if result.score >= 0.09]
+        retrieval_ms = (time.perf_counter() - retrieval_start) * 1000
         if not results:
-            return {"answer": "I don't know based on the available maintenance documents.", "sources": []}
+            return (
+                {"answer": "I don't know based on the available maintenance documents.", "sources": []},
+                {"retrieval_ms": retrieval_ms, "generation_ms": 0.0},
+            )
+        generation_start = time.perf_counter()
         query_terms = set(tokenize(expanded))
-        candidates: list[tuple[int, str, Chunk]] = []
-        for result in results:
-            prose = " ".join(line for line in result.chunk.text.splitlines() if not line.lstrip().startswith("#"))
-            for sentence in re.split(r"(?<=[.!?])\s+", prose):
-                overlap = len(query_terms.intersection(tokenize(sentence)))
-                if overlap:
-                    candidates.append((overlap, sentence.strip(), result.chunk))
-        chosen = sorted(candidates, key=lambda x: x[0], reverse=True)[:3]
-        answer = " ".join(sentence for _, sentence, _ in chosen)
-        sources = []
-        seen = set()
-        for result in results:
-            chunk = result.chunk
-            if chunk.source not in seen:
-                sources.append({"id": chunk.chunk_id, "title": chunk.title, "source": chunk.source})
-                seen.add(chunk.source)
-        return {"answer": answer or "I don't know based on the available maintenance documents.", "sources": sources}
+        procedural = bool(re.search(r"\b(steps?|sequence|procedure|how)\b", normalized))
+        best_chunk = results[0].chunk
+        candidates: list[tuple[int, str]] = []
+        for paragraph in best_chunk.text.split("\n\n"):
+            lines = paragraph.splitlines()
+            heading = " ".join(line.lstrip("# ") for line in lines if line.startswith("#"))
+            prose = " ".join(line for line in lines if not line.startswith("#")).strip()
+            if not prose:
+                continue
+            overlap = len(query_terms.intersection(tokenize(f"{heading} {prose}")))
+            if procedural and any(word in heading.lower() for word in ("sequence", "procedure", "clearing")):
+                overlap += 3
+            candidates.append((overlap, prose))
+        answer = max(candidates, key=lambda item: item[0])[1] if candidates else ""
+        sources = [{"id": best_chunk.chunk_id, "title": best_chunk.title, "source": best_chunk.source}]
+        return (
+            {"answer": answer or "I don't know based on the available maintenance documents.", "sources": sources},
+            {"retrieval_ms": retrieval_ms, "generation_ms": (time.perf_counter() - generation_start) * 1000},
+        )

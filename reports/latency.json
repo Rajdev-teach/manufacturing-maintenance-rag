@@ -1,0 +1,32 @@
+{
+  "timestamp_utc": "2026-09-28T21:27:23.338557+00:00",
+  "backend": "local",
+  "model": "tf-idf-extractive-v1",
+  "version": "1.0.0",
+  "warmup_count": 3,
+  "measured_count": 30,
+  "unit": "milliseconds",
+  "client_latency": {
+    "p50": 36.607,
+    "p95": 49.495,
+    "p99": 55.884
+  },
+  "mlflow_metrics": {
+    "latency_ms": {
+      "p50": 0.267,
+      "p95": 0.306,
+      "p99": 0.349
+    },
+    "retrieval_ms": {
+      "p50": 0.174,
+      "p95": 0.225,
+      "p99": 0.26
+    },
+    "generation_ms": {
+      "p50": 0.061,
+      "p95": 0.069,
+      "p99": 0.07
+    }
+  },
+  "dominant_phase_by_mean": "retrieval_ms"
+}

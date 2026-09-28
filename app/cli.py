@@ -7,7 +7,7 @@ from app.local_rag import LocalRAG
 def main() -> None:
     settings = load_settings()
     if settings.backend != "local":
-        raise SystemExit("Use scripts/demo_openai.py for the OpenAI/FAISS backend.")
+        raise SystemExit("For OpenAI/FAISS mode, start the API with RAG_BACKEND=openai.")
     rag = LocalRAG.from_directory(settings.root / "data" / "clean", settings.top_k)
     history: list[tuple[str, str]] = []
     print("Manufacturing RAG Assistant — type 'exit' to quit")
@@ -26,4 +26,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
