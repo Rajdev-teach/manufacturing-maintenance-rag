@@ -1,0 +1,45 @@
+services:
+  mlflow:
+    build: .
+    command:
+      - mlflow
+      - server
+      - --backend-store-uri
+      - sqlite:////app/mlruns/mlflow.db
+      - --artifacts-destination
+      - /app/mlruns/artifacts
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+      - --workers
+      - "1"
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - mlflow-data:/app/mlruns
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  api:
+    build: .
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    environment:
+      RAG_BACKEND: ${RAG_BACKEND:-local}
+      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o-mini}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SERVICE_VERSION: ${SERVICE_VERSION:-1.0.0}
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT: ${MLFLOW_EXPERIMENT:-manufacturing-maintenance-rag-api}
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  mlflow-data:

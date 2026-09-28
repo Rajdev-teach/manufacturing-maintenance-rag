@@ -17,11 +17,82 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install pytest
-        run: pip install pytest
+      - name: Install pinned dependencies
+        run: pip install -r requirements.txt
 
       - name: Run tests
         run: pytest -q
 
       - name: Run RAG evaluation
         run: python scripts/evaluate.py
+
+  container:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build and start containers
+        run: docker compose up --build -d --wait
+
+      - name: Smoke test API and MLflow tracking
+        run: |
+          curl --fail http://127.0.0.1:8000/health
+          curl --fail http://127.0.0.1:8000/docs
+          curl --fail -X POST http://127.0.0.1:8000/query \
+            -H 'Content-Type: application/json' \
+            -d '{"question":"What are the lockout tagout steps before maintenance?"}' \
+            | python -c 'import json,sys; r=json.load(sys.stdin); assert r["sources"] and r["metadata"]["tracking_status"] == "logged"'
+          curl --fail -sS -X POST http://127.0.0.1:8000/query \
+            -H 'Content-Type: application/json' \
+            -d '{"question":"How should a conveyor jam be cleared?"}' -o /dev/null
+          curl --fail -sS -X POST http://127.0.0.1:8000/query \
+            -H 'Content-Type: application/json' \
+            -d '{"question":"What checks help diagnose bearing vibration?"}' -o /dev/null
+          docker compose exec -T api python - <<'PY'
+          import os
+          from mlflow.tracking import MlflowClient
+          client = MlflowClient(tracking_uri=os.environ['MLFLOW_TRACKING_URI'])
+          experiment = client.get_experiment_by_name(os.environ['MLFLOW_EXPERIMENT'])
+          runs = client.search_runs([experiment.experiment_id], max_results=10)
+          assert len(runs) >= 3
+          assert 'latency_ms' in runs[0].data.metrics
+          assert any(item.path == 'interaction.json' for item in client.list_artifacts(runs[0].info.run_id))
+          PY
+
+      - name: Capture genuine service screenshots
+        run: |
+          mkdir -p docs/screenshots
+          read -r experiment_id run_id < <(docker compose exec -T api python - <<'PY'
+          import os
+          from mlflow.tracking import MlflowClient
+          client = MlflowClient(tracking_uri=os.environ['MLFLOW_TRACKING_URI'])
+          experiment = client.get_experiment_by_name(os.environ['MLFLOW_EXPERIMENT'])
+          runs = client.search_runs([experiment.experiment_id], max_results=1)
+          print(experiment.experiment_id, runs[0].info.run_id)
+          PY
+          )
+          chrome="$(command -v google-chrome)"
+          for pair in \
+            "fastapi-docs.png|http://127.0.0.1:8000/docs" \
+            "mlflow-runs.png|http://127.0.0.1:5000/#/experiments/${experiment_id}" \
+            "mlflow-run-detail.png|http://127.0.0.1:5000/#/experiments/${experiment_id}/runs/${run_id}"; do
+            name="${pair%%|*}"
+            url="${pair#*|}"
+            "$chrome" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage \
+              --hide-scrollbars --window-size=1440,1100 --virtual-time-budget=7000 \
+              --screenshot="docs/screenshots/${name}" "$url"
+            file "docs/screenshots/${name}"
+          done
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-screenshots
+          path: docs/screenshots/*.png
+          if-no-files-found: warn
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down
