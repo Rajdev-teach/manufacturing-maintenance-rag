@@ -92,7 +92,7 @@ The evaluation checks retrieval and refusal behavior against 15 authored cases. 
 
 Measured on 2026-09-28 using the local backend, Python 3.12, three warm-up calls, and 30 measured queries. See [`reports/latency.json`](reports/latency.json) for the machine-readable record. The reported inference metric stops before MLflow logging, so client and inference values measure different spans.
 
-GitHub Actions runs tests, the authored evaluation, a Docker Compose build, and an API/MLflow smoke test. The [verification record](docs/verification.md) states what was actually run and where to find evidence.
+GitHub Actions runs tests, the authored evaluation, a Docker Compose build, and an API/MLflow smoke test. The [verification record and live screenshots](docs/verification.md) show what actually ran.
 
 ## Reflection
 

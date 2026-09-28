@@ -17,13 +17,17 @@ The first MLflow startup failed against unbounded SQLAlchemy 2.1.1. Pinning `SQL
 
 ## Container and screenshot evidence
 
-The local workspace does not have a Docker daemon or a browser binary. The GitHub Actions `container` job builds the image, starts API and MLflow with Docker Compose, checks the HTTP routes and MLflow metrics/artifact, and captures browser screenshots. Record the passing run and add its screenshots to `docs/screenshots/` after the workflow completes:
+[GitHub Actions run 36486528012](https://github.com/Rajdev-teach/manufacturing-maintenance-rag/actions/runs/36486528012) passed both jobs on 2026-09-28. The `container` job built the image, started API and MLflow with Docker Compose, checked `/health`, `/docs`, three grounded `/query` calls, MLflow metrics, and the `interaction.json` artifact. The `test` job installed pinned dependencies, passed all 11 tests, and ran the 15-case evaluation.
 
-- `fastapi-docs.png`: the real `/docs` page
-- `mlflow-runs.png`: the experiment runs table
-- `mlflow-run-detail.png`: a run with parameters and metrics
+These screenshots were captured from the live Docker Compose stack in that run:
 
-Until that job passes, the Docker build and its screenshots are pending verification. Screenshots are evidence of the running local demonstration, not a claim that the service is publicly deployed.
+![FastAPI documentation showing health, info, and query routes](screenshots/fastapi-docs.png)
+
+![MLflow experiment runs table with three successful queries](screenshots/mlflow-runs.png)
+
+![MLflow run detail showing logged parameters and timing metrics](screenshots/mlflow-run-detail.png)
+
+The images prove the local demonstration on the GitHub runner; they do not imply a public deployment.
 
 ## Scope of the measurements
 
