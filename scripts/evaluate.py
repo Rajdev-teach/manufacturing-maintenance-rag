@@ -26,8 +26,9 @@ def main() -> None:
         print(f"{'PASS' if (case['expected_source'] in sources or (case['expected_source'] is None and not sources)) else 'FAIL'} | {case['question']}")
     print(f"\nRetrieval/refusal accuracy: {hits}/{len(cases)} ({hits / len(cases):.1%})")
     print(f"Correct out-of-scope refusals: {refusals}")
+    if hits != len(cases):
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
     main()
-

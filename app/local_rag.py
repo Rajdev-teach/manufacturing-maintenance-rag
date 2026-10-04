@@ -23,14 +23,15 @@ def tokenize(text: str) -> list[str]:
     output: list[str] = []
     for raw in TOKEN_RE.findall(text.lower()):
         terms = EXPANSIONS.get(raw, (raw,))
-        for token in terms:
-            if token in STOPWORDS:
-                continue
-            if token.endswith("ies") and len(token) > 4:
-                token = token[:-3] + "y"
-            elif token.endswith("s") and len(token) > 4 and not token.endswith("ss"):
-                token = token[:-1]
-            output.append(token)
+        for term in terms:
+            for token in re.split(r"[-_]", term):
+                if not token or token in STOPWORDS:
+                    continue
+                if token.endswith("ies") and len(token) > 4:
+                    token = token[:-3] + "y"
+                elif token.endswith("s") and len(token) > 4 and not token.endswith("ss"):
+                    token = token[:-1]
+                output.append(token)
     return output
 
 
