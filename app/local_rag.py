@@ -78,7 +78,7 @@ class LocalRAG:
         self, question: str, history: list[tuple[str, str]] | None = None, top_k: int | None = None
     ) -> tuple[dict, dict[str, float]]:
         zero = {"retrieval_ms": 0.0, "generation_ms": 0.0}
-        normalized = question.strip().lower()
+        normalized = " ".join(question.lower().split())
         if not normalized or len(question) > 1000:
             return {"answer": "Please enter a question between 1 and 1,000 characters.", "sources": []}, zero
         if any(pattern in normalized for pattern in BLOCKED_PATTERNS):
