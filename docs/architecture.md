@@ -2,6 +2,20 @@
 
 The service has two RAG backends. `local` retrieves with TF-IDF and composes an extractive answer without credentials. `openai` embeds documents once at startup, uses a FAISS index to retrieve chunks, and generates a grounded answer with the configured chat model. Both return source IDs from the approved corpus.
 
+The additional `azure` backend uses Azure OpenAI deployments and a pre-ingested Azure AI Search HNSW index. Index provisioning and ingestion are explicit commands, separate from startup. The Azure container is published to ACR and hosted by App Service; GitHub Actions deploys immutable revision tags. See [the Azure lab walkthrough](azure-lab.md) for configuration and live-verification requirements.
+
+```mermaid
+flowchart TD
+    Client["Authenticated API client"] --> App["App Service: FastAPI"]
+    App --> Embed["Azure OpenAI embeddings"]
+    Embed --> Search["Azure AI Search"]
+    Search --> Chat["Azure OpenAI chat"]
+    Chat --> App
+    GitHub["GitHub Actions"] --> ACR["Container Registry"]
+    ACR --> App
+    Corpus["Approved corpus ingestion"] --> Search
+```
+
 ## System flowchart
 
 ```mermaid

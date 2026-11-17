@@ -83,6 +83,7 @@ def test_openai_adapter_reports_model_and_citations_without_network():
     service.llm = SimpleNamespace(invoke=lambda messages: SimpleNamespace(content="Inspect vibration [bearing-1]."))
 
     answer = service.ask("How do I inspect this bearing?", top_k=2)
-    assert answer.sources == [{"id": "bearing-1", "title": "Bearing Diagnostics", "source": "bearing.md"}]
+    assert answer.sources == [{"id": "bearing-1", "title": "Bearing Diagnostics", "source": "bearing.md",
+                               "content": "Inspect vibration and lubricant condition."}]
     assert "bearing-1" in answer.text
     assert answer.retrieval_ms >= 0 and answer.generation_ms >= 0

@@ -110,7 +110,7 @@ class LocalRAG:
                 overlap += 3
             candidates.append((overlap, prose))
         answer = max(candidates, key=lambda item: item[0])[1] if candidates else ""
-        sources = [{"id": best_chunk.chunk_id, "title": best_chunk.title, "source": best_chunk.source}]
+        sources = [{"id": best_chunk.chunk_id, "title": best_chunk.title, "source": best_chunk.source, "content": best_chunk.text}]
         return (
             {"answer": answer or "I don't know based on the available maintenance documents.", "sources": sources},
             {"retrieval_ms": retrieval_ms, "generation_ms": (time.perf_counter() - generation_start) * 1000},

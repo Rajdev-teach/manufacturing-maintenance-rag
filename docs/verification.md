@@ -1,5 +1,21 @@
 # Verification record
 
+## Azure migration, 2026-11-17
+
+The Azure implementation adds deployment-specific configuration, Azure OpenAI and Search clients, HNSW index provisioning, batched ingestion, supporting passages, optional bearer authentication, a separate cloud dependency manifest, Bicep infrastructure, and deployment/cleanup automation. See [the module-by-module walkthrough](azure-lab.md).
+
+The local Azure tests simulate remote responses and exercise SDK contracts, dimensionality checks, schema compatibility, idempotent ingestion, failed-upload behavior, citations, authorization, sanitized outages, and client shutdown. No Azure credentials were available in the implementation workspace. No live endpoint, cloud performance measurement, Azure screenshot, deployment success, or decommissioning is claimed here. `reports/azure-live/` and deployment artifacts are created by successful live checks only.
+
+| Local migration check | Observed result |
+|---|---|
+| Automated tests, Python 3.12 | 27 passed |
+| Existing local retrieval/refusal evaluation | 15/15 passed |
+| Azure-only dependency environment | Installed and passed dependency checks; imported Azure SDKs without LangChain/FAISS |
+| Real HTTP smoke test in the cloud-only environment | Health, image revision, query, supporting passages, and disabled tracking passed with the local backend |
+| Infrastructure | Bicep compiled successfully; all three Bash scripts passed syntax checks |
+
+Docker is verified by GitHub Actions; no Docker daemon was available in the implementation workspace. Live Azure validation is a separate requirement described above.
+
 ## Local execution, 2026-09-28
 
 Environment: Python 3.12, pinned packages in `requirements.txt`, `RAG_BACKEND=local`, a local MLflow 2.17 tracking server with SQLite and proxied artifacts. No OpenAI key was used.

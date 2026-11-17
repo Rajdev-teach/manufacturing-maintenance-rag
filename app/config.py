@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+from app.azure_config import AzureSettings, load_azure_settings
 
 
 @dataclass(frozen=True)
@@ -19,16 +21,25 @@ class Settings:
     service_version: str = "1.0.0"
     mlflow_tracking_uri: str = "http://localhost:5000"
     mlflow_experiment: str = "manufacturing-maintenance-rag-api"
+    tracking_enabled: bool = True
+    api_auth_token: str = field(default="", repr=False)
+    azure: AzureSettings | None = None
 
 
 def load_settings() -> Settings:
     root = Path(__file__).resolve().parents[1]
-    load_dotenv(root / ".env", override=False)
+    load_dotenv(os.getenv("DOTENV_PATH", str(root / ".env")), override=False)
     backend = os.getenv("RAG_BACKEND", "local").lower()
-    if backend not in {"local", "openai"}:
-        raise ValueError("RAG_BACKEND must be 'local' or 'openai'")
+    if backend not in {"local", "openai", "azure"}:
+        raise ValueError("RAG_BACKEND must be 'local', 'openai', or 'azure'")
     if backend == "openai" and not os.getenv("OPENAI_API_KEY"):
         raise ValueError("OPENAI_API_KEY is required for the OpenAI backend")
+    tracking = os.getenv("MLFLOW_TRACKING_ENABLED", "true").lower()
+    if tracking not in {"true", "false"}:
+        raise ValueError("MLFLOW_TRACKING_ENABLED must be true or false")
+    token = os.getenv("API_AUTH_TOKEN", "")
+    if token and len(token) < 24:
+        raise ValueError("API_AUTH_TOKEN must contain at least 24 characters")
     return Settings(
         root=root,
         backend=backend,
@@ -37,4 +48,7 @@ def load_settings() -> Settings:
         service_version=os.getenv("SERVICE_VERSION", "1.0.0"),
         mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000"),
         mlflow_experiment=os.getenv("MLFLOW_EXPERIMENT", "manufacturing-maintenance-rag-api"),
+        tracking_enabled=tracking == "true",
+        api_auth_token=token,
+        azure=load_azure_settings() if backend == "azure" else None,
     )

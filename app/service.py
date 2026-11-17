@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from app.config import Settings
 from app.local_rag import LocalRAG
+
+if TYPE_CHECKING:
+    from app.azure_rag import AzureService
 
 
 @dataclass(frozen=True)
@@ -79,13 +83,19 @@ class OpenAIService:
         )
         generation_ms = (time.perf_counter() - generation_start) * 1000
         sources = [
-            {"id": doc.metadata["chunk_id"], "title": doc.metadata["title"], "source": doc.metadata["source"]}
+            {"id": doc.metadata["chunk_id"], "title": doc.metadata["title"], "source": doc.metadata["source"], "content": doc.page_content}
             for doc in documents
         ]
         return Answer(str(response.content), sources, retrieval_ms, generation_ms)
 
 
-def create_service(settings: Settings) -> LocalService | OpenAIService:
+def create_service(settings: Settings) -> LocalService | OpenAIService | AzureService:
     if settings.backend == "local":
         return LocalService(settings)
-    return OpenAIService(settings)
+    if settings.backend == "openai":
+        return OpenAIService(settings)
+    from app.azure_rag import AzureService
+
+    if settings.azure is None:
+        raise ValueError("Azure settings were not initialized")
+    return AzureService(settings.azure)

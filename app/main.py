@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import logging
 import os
+import secrets
 import time
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import load_settings
 from app.schemas import QueryMetadata, QueryRequest, QueryResponse, ServiceInfo
@@ -26,7 +28,12 @@ def create_app() -> FastAPI:
         app.state.service = create_service(settings)
         app.state.tracker = InferenceTracker(settings)
         logger.info("RAG service ready: backend=%s, version=%s", settings.backend, settings.service_version)
-        yield
+        try:
+            yield
+        finally:
+            close = getattr(app.state.service, "close", None)
+            if close:
+                close()
 
     app = FastAPI(
         title="Manufacturing Maintenance RAG API",
@@ -47,10 +54,20 @@ def create_app() -> FastAPI:
             version=settings.service_version,
             backend=settings.backend,
             model=request.app.state.service.model_name,
-            embedding_model=settings.embedding_model if settings.backend == "openai" else None,
+            embedding_model=(settings.azure.embed_deployment if settings.azure else
+                             settings.embedding_model if settings.backend == "openai" else None),
+            build_commit=os.getenv("BUILD_COMMIT", "development"),
         )
 
-    @app.post("/query", response_model=QueryResponse)
+    bearer = HTTPBearer(auto_error=False)
+
+    def authorize(request: Request, credentials: HTTPAuthorizationCredentials | None = Depends(bearer)) -> None:
+        expected = request.app.state.settings.api_auth_token
+        supplied = credentials.credentials if credentials else ""
+        if expected and not secrets.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8")):
+            raise HTTPException(status_code=401, detail="Valid bearer token required", headers={"WWW-Authenticate": "Bearer"})
+
+    @app.post("/query", response_model=QueryResponse, dependencies=[Depends(authorize)])
     def query(payload: QueryRequest, request: Request) -> QueryResponse:
         if not payload.question.strip():
             raise HTTPException(status_code=400, detail="Question must not be empty")
