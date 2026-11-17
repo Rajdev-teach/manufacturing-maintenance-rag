@@ -12,6 +12,7 @@ class SourceCitation(BaseModel):
     id: str
     title: str
     source: str
+    content: str | None = Field(default=None, description="Retrieved supporting passage, when available")
 
 
 class QueryMetadata(BaseModel):
@@ -37,3 +38,4 @@ class ServiceInfo(BaseModel):
     backend: str
     model: str
     embedding_model: str | None
+    build_commit: str = "development"

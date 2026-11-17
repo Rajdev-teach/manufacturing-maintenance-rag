@@ -17,11 +17,14 @@ class InferenceTracker:
     def __init__(self, settings: Settings):
         self.uri = settings.mlflow_tracking_uri
         self.experiment = settings.mlflow_experiment
+        self.enabled = settings.tracking_enabled
 
     def log(
         self, *, request_id: str, question: str, answer: Answer, backend: str,
         model: str, version: str, top_k: int, latency_ms: float,
     ) -> str:
+        if not self.enabled:
+            return "disabled"
         try:
             mlflow.set_tracking_uri(self.uri)
             mlflow.set_experiment(self.experiment)

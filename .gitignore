@@ -10,3 +10,8 @@ mlartifacts/
 mlflow.db
 *.db-journal
 .coverage
+.env.*
+!.env.example
+.azure-lab/
+reports/azure-live/
+infra/main.json

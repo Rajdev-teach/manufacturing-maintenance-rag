@@ -1,15 +1,18 @@
 # syntax=docker/dockerfile:1
 FROM python:3.11-slim
+ARG BUILD_COMMIT=development
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    BUILD_COMMIT=${BUILD_COMMIT}
 
 WORKDIR /app
+ARG REQUIREMENTS_FILE=requirements.txt
 
 # Dependencies change less often than the application code.
-COPY requirements.txt ./
+COPY ${REQUIREMENTS_FILE} ./requirements.txt
 RUN python -m pip install -r requirements.txt
 
 RUN useradd --system --create-home --uid 10001 appuser \

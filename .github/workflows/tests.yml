@@ -26,6 +26,37 @@ jobs:
       - name: Run RAG evaluation
         run: python scripts/evaluate.py
 
+  infrastructure:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate provisioning scripts
+        run: bash -n infra/provision.sh infra/configure-github.sh infra/cleanup.sh
+      - name: Compile Azure infrastructure
+        run: az bicep build --file infra/main.bicep --outfile "$RUNNER_TEMP/azure-lab.json"
+
+  azure-image:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Azure runtime without local vector libraries
+        run: docker build --build-arg REQUIREMENTS_FILE=requirements-azure.txt --build-arg BUILD_COMMIT=ci -t rag-azure:ci .
+      - name: Verify cloud SDK imports and shared API contract
+        run: |
+          docker run --rm rag-azure:ci python -c "import importlib.util; from app.azure_rag import AzureService; assert importlib.util.find_spec('langchain') is None"
+          docker run -d --name azure-image-test -p 127.0.0.1:8001:8000 -e RAG_BACKEND=local -e MLFLOW_TRACKING_ENABLED=false rag-azure:ci
+          for attempt in $(seq 1 30); do
+            if curl --fail -s http://127.0.0.1:8001/health; then break; fi
+            sleep 2
+          done
+          curl --fail -s http://127.0.0.1:8001/info | python -c 'import json,sys; assert json.load(sys.stdin)["build_commit"] == "ci"'
+          curl --fail -s -X POST http://127.0.0.1:8001/query -H 'Content-Type: application/json' \
+            -d '{"question":"What steps verify zero energy before maintenance?"}' \
+            | python -c 'import json,sys; r=json.load(sys.stdin); assert r["sources"][0]["content"] and r["metadata"]["tracking_status"] == "disabled"'
+      - name: Stop smoke-test container
+        if: always()
+        run: docker rm -f azure-image-test || true
+
   container:
     runs-on: ubuntu-24.04
     steps:

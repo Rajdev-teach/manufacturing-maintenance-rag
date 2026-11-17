@@ -4,11 +4,15 @@ A source-citing question-answering service for a small, curated manufacturing ma
 
 The default `local` backend is fully offline: TF-IDF retrieval plus an extractive answer. The optional `openai` backend builds an OpenAI embedding/FAISS index once at startup and generates answers with a chat model. The two modes are labeled in every response and MLflow run; results from one mode should not be presented as results from the other.
 
+The `azure` backend implements the **End-to-End Enterprise RAG Deployment on Azure** lab: Azure OpenAI chat/embeddings, an HNSW index in Azure AI Search, a slim cloud container, Azure Container Registry, App Service, and a GitHub Actions deployment workflow. Follow the [seven-module Azure lab walkthrough](docs/azure-lab.md), including provisioning, verification, evidence capture, and cleanup. Cloud execution requires an authenticated Azure subscription; passing offline tests does not establish a live deployment.
+
 ## Architecture
 
 The request flows through validation, a selected RAG backend, a best-effort MLflow tracking helper, and a typed response. The service stays available if tracking goes down. See the [system flowchart and UML sequence, activity, and class diagrams](docs/architecture.md).
 
 The six source documents live in `data/clean/`; `data/manifest.csv` lists their titles, owners, and dates. The API exposes chunk ID, title, and source filename with each answer.
+
+Sources now also include the supporting `content` passage. `/info` exposes the container's `build_commit` so deployment checks can detect a stale image. When `API_AUTH_TOKEN` is configured, `/query` requires `Authorization: Bearer <token>`; `/health`, `/info`, and `/docs` remain available for inspection.
 
 ## Prerequisites
 
