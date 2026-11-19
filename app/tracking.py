@@ -5,7 +5,11 @@ from __future__ import annotations
 import json
 import logging
 
-import mlflow
+try:
+    import mlflow
+except ImportError:
+    # The public offline demo does not install the optional tracking stack.
+    mlflow = None
 
 from app.config import Settings
 from app.service import Answer
@@ -25,6 +29,9 @@ class InferenceTracker:
     ) -> str:
         if not self.enabled:
             return "disabled"
+        if mlflow is None:
+            logger.warning("MLflow is not installed; tracking unavailable for request %s", request_id)
+            return "unavailable"
         try:
             mlflow.set_tracking_uri(self.uri)
             mlflow.set_experiment(self.experiment)
@@ -50,3 +57,4 @@ class InferenceTracker:
         except Exception:
             logger.warning("MLflow tracking unavailable for request %s", request_id, exc_info=True)
             return "unavailable"
+

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore six maintenance reference documents with source-citing, extractive answers.">
+  <meta name="theme-color" content="#122830"><title>Maintenance Atlas · Knowledge workspace</title>
+  <link rel="icon" href="/assets/mark.svg"><link rel="stylesheet" href="/assets/style.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Maintenance Atlas home"><img src="/assets/mark.svg" alt="" width="38" height="38"><span>Maintenance<br><strong>Atlas</strong></span></a>
+    <div class="side-label">WORKSPACE</div>
+    <nav aria-label="Workspace"><button class="nav-item active" id="ask-nav" aria-current="page"><span aria-hidden="true">⌘</span> Ask the knowledge base</button><button class="nav-item" id="library-nav"><span aria-hidden="true">▤</span> Document library <small>06</small></button></nav>
+    <div class="side-note"><span class="live-dot"></span> Offline retrieval engine<p>Six curated documents.<br>Every answer has a source.</p></div>
+    <a class="repo-link" href="https://github.com/Rajdev-teach/manufacturing-maintenance-rag" target="_blank" rel="noreferrer">View project on GitHub </a>
+    <div class="side-bottom">BUILT BY RAJDEV KUMAR<span>Manufacturing knowledge, connected.</span></div>
+  </aside>
+  <main>
+    <header class="topbar"><span>Knowledge workspace <span class="slash">/</span> <strong id="breadcrumb">Ask Atlas</strong></span><span class="status" id="service-status" role="status">Connecting to service…</span></header>
+    <section class="workspace" id="ask-view">
+      <div class="eyebrow"><span></span> MAINTENANCE INTELLIGENCE</div>
+      <h1>A clearer path from<br>question to <em>know-how.</em></h1>
+      <p class="intro">Find the right passage in your maintenance references.<br>Ask a question, inspect the source, and keep learning.</p>
+      <div class="metrics" aria-label="Knowledge base summary"><div><strong>06</strong><span>Reference documents</span></div><div><strong>TF–IDF</strong><span>Local retrieval</span></div><div><strong>100%</strong><span>Extractive answers</span></div></div>
+      <form id="question-form" class="question-card">
+        <div class="form-heading"><label for="question">What would you like to understand?</label><span class="kbd">ASK ATLAS</span></div>
+        <textarea id="question" name="question" rows="3" maxlength="1000" required placeholder="For example, what fields belong in a CMMS asset record?"></textarea>
+        <div class="question-footer"><span><span class="mini-dot"></span> Answers grounded in the demo corpus</span><button class="primary" id="submit-question" type="submit">Find an answer <span aria-hidden="true"></span></button></div>
+      </form>
+      <div class="suggestions" aria-label="Example questions"><span>TRY A QUESTION</span><button type="button" data-question="What fields belong in an asset record?">CMMS asset records </button><button type="button" data-question="How is MTBF calculated?">Understanding MTBF </button><button type="button" data-question="What information belongs in an incident report?">Incident reporting </button></div>
+      <p id="query-status" class="query-status" role="status"></p>
+      <section id="answer-section" class="answer-card" hidden aria-labelledby="answer-label">
+        <div class="answer-top"><span class="eyebrow" id="answer-label">ATLAS RESPONSE</span><span id="answer-kind" class="badge"></span></div>
+        <h2 id="answered-question"></h2><div id="answer-text" class="answer-text"></div>
+        <div id="sources"></div><p class="answer-meta" id="answer-meta"></p>
+      </section>
+      <div class="corpus-heading"><div><span class="eyebrow">THE KNOWLEDGE BEHIND THE ANSWER</span><h2>A small library. A focused purpose.</h2></div><button id="browse-library" class="text-button">Explore all documents </button></div>
+      <div class="topic-grid"><article><span class="topic-number">RELIABILITY</span><h3>Keep equipment understood.</h3><p>Preventive maintenance, bearing diagnostics, and asset records.</p></article><article><span class="topic-number">OPERATIONS</span><h3>Learn the documented process.</h3><p>Conveyor safety, energy isolation, and incident response.</p></article></div>
+      <p class="disclosure">Educational demonstration using a small, curated corpus. Answers reproduce document passages through TF-IDF retrieval; there is no generative model. Follow your facility’s approved procedures and qualified supervision for actual maintenance work.</p>
+    </section>
+    <section class="workspace library-view" id="library-view" hidden>
+      <div class="eyebrow"><span></span> CURATED REFERENCE LIBRARY</div><h1>The source of<br><em>every answer.</em></h1><p class="intro">Read the six documents included in this demonstration.</p>
+      <div id="document-list" class="document-list"></div><p class="disclosure">These are sample learning materials, not a facility-specific operating procedure.</p>
+    </section>
+    <footer><span>MAINTENANCE ATLAS</span><span>Source-first. Always.</span></footer>
+  </main>
+</body>
+</html>

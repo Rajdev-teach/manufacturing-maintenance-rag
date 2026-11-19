@@ -43,12 +43,16 @@ def test_validation_and_refusal(monkeypatch):
 
 
 def test_tracking_outage_does_not_break_query(monkeypatch):
+    from types import SimpleNamespace
+
     monkeypatch.setenv("RAG_BACKEND", "local")
 
     def offline(*args, **kwargs):
         raise ConnectionError("tracking server down")
 
-    monkeypatch.setattr("app.tracking.mlflow.set_experiment", offline)
+    monkeypatch.setattr("app.tracking.mlflow", SimpleNamespace(
+        set_tracking_uri=lambda uri: None, set_experiment=offline,
+    ))
     with TestClient(create_app()) as client:
         response = client.post("/query", json={"question": "How should a conveyor jam be cleared?"})
     assert response.status_code == 200
@@ -87,3 +91,4 @@ def test_openai_adapter_reports_model_and_citations_without_network():
                                "content": "Inspect vibration and lubricant condition."}]
     assert "bearing-1" in answer.text
     assert answer.retrieval_ms >= 0 and answer.generation_ms >= 0
+

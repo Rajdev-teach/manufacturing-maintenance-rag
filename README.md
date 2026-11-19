@@ -6,6 +6,23 @@ The default `local` backend is fully offline: TF-IDF retrieval plus an extractiv
 
 The `azure` backend implements the **End-to-End Enterprise RAG Deployment on Azure** lab: Azure OpenAI chat/embeddings, an HNSW index in Azure AI Search, a slim cloud container, Azure Container Registry, App Service, and a GitHub Actions deployment workflow. Follow the [seven-module Azure lab walkthrough](docs/azure-lab.md), including provisioning, verification, evidence capture, and cleanup. Cloud execution requires an authenticated Azure subscription; passing offline tests does not establish a live deployment.
 
+## Maintenance Atlas web demo on Vercel
+
+`web/` provides a responsive question interface, supporting passages, clear out-of-scope refusals, and a browsable six-document library. The public release runs the **actual Python local backend** through FastAPI: TF-IDF retrieval and extractive passages, without OpenAI/Azure calls, API keys, or MLflow tracking. These curated learning materials are not facility-specific operating procedures. Questions are sent to the demo service to answer, but the application does not save query history or send it to MLflow.
+
+Build and verify the slim, self-contained Vercel upload:
+
+```bash
+pip install -r deploy/vercel/requirements.txt httpx==0.27.2
+python -m unittest discover -s tests -p test_web_demo.py -v
+python scripts/evaluate.py
+python scripts/build_vercel_demo.py
+```
+
+Upload the resulting `vercel-dist/` folder to Vercel Drop. Its `index.py` selects the local backend, disables inference tracking, and serves the UI plus `/query`, `/library`, `/health`, and `/info`. Its four minimal pinned runtime dependencies are isolated from the full Docker/MLflow requirements. Pass `--commit <source-commit>` to the build script to stamp `/info`; GitHub Actions uses `GITHUB_SHA` automatically. For local preview: `cd vercel-dist` then `python -m uvicorn index:app --reload`.
+
+Publication is through a manual upload. GitHub automatic deployment is not connected; later changes require rebuilding and redeploying the package or configuring a Git-based deployment. The Docker, OpenAI, Azure, and tracking workflows documented below remain separate from this public local demo.
+
 ## Architecture
 
 The request flows through validation, a selected RAG backend, a best-effort MLflow tracking helper, and a typed response. The service stays available if tracking goes down. See the [system flowchart and UML sequence, activity, and class diagrams](docs/architecture.md).
@@ -125,3 +142,4 @@ compose.yaml          Local API and MLflow stack
 ```
 
 This educational service does not replace site procedures, manufacturer instructions, or qualified safety judgment. The corpus and benchmark are small demonstrations, not a production accuracy claim.
+
