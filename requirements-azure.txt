@@ -1,9 +1,11 @@
 # Cloud runtime: local LangChain/FAISS libraries stay out of the deployed image.
-fastapi==0.115.0
-uvicorn==0.32.0
-pydantic==2.9.2
-python-dotenv==1.0.1
+fastapi==0.165.0
+uvicorn==0.54.0
+pydantic==2.14.4
+python-dotenv==1.2.4
 openai==1.109.1
 azure-core==1.36.0
 azure-search-documents==11.6.0
 mlflow-skinny==2.17.0
+
+starlette==1.10.0

@@ -21,7 +21,7 @@ python scripts/evaluate.py
 python scripts/build_vercel_demo.py
 ```
 
-Upload the resulting `vercel-dist/` folder to Vercel Drop. Its `index.py` selects the local backend, disables inference tracking, and serves the UI plus `/query`, `/library`, `/health`, and `/info`. Its four minimal pinned runtime dependencies are isolated from the full Docker/MLflow requirements. Pass `--commit <source-commit>` to the build script to stamp `/info`; GitHub Actions uses `GITHUB_SHA` automatically. For local preview: `cd vercel-dist` then `python -m uvicorn index:app --reload`.
+Upload the resulting `vercel-dist/` folder to Vercel Drop. Its `index.py` selects the local backend, disables inference tracking, and serves the UI plus `/query`, `/library`, `/health`, and `/info`. Its five minimal pinned runtime dependencies are isolated from the full Docker/MLflow requirements. Pass `--commit <source-commit>` to the build script to stamp `/info`; GitHub Actions uses `GITHUB_SHA` automatically. For local preview: `cd vercel-dist` then `python -m uvicorn index:app --reload`.
 
 Publication is through a manual upload. GitHub automatic deployment is not connected; later changes require rebuilding and redeploying the package or configuring a Git-based deployment. The Docker, OpenAI, Azure, and tracking workflows documented below remain separate from this public local demo.
 
@@ -35,7 +35,7 @@ Sources now also include the supporting `content` passage. `/info` exposes the c
 
 ## Prerequisites
 
-- Python 3.10+ for local development (Docker uses Python 3.11)
+- Python 3.11+ for the API and local development (Docker uses Python 3.11)
 - Docker Engine 24+ with Docker Compose v2 for the container workflow
 - Free local ports 8000 (API) and 5000 (MLflow)
 - About 4 GB of disk space for dependencies and images
@@ -145,3 +145,10 @@ compose.yaml          Local API and MLflow stack
 
 This educational service does not replace site procedures, manufacturer instructions, or qualified safety judgment. The corpus and benchmark are small demonstrations, not a production accuracy claim.
 
+
+
+## Public deployment security
+
+The Vercel package pins the updated FastAPI/Starlette runtime, serves a restrictive Content Security Policy, rejects browser requests from other origins, accepts JSON only, caps request bodies at 4 KB, and uses strict query validation. The public `/docs`, `/redoc`, and `/openapi.json` routes are disabled. Validation errors do not repeat the submitted question, and API responses use `Cache-Control: no-store`.
+
+Anonymous demo queries are limited to 40 per client per minute and 400 total per minute **per running instance**. These bounded in-memory counters supplement platform protection; they are not a distributed quota or employee authentication. The public endpoint answers only from the six included sample documents. It has no SAP connection, private document upload, remote model calls, or query-history store. A configured server-side `API_AUTH_TOKEN` remains enforced, but no token is embedded in the public browser bundle.

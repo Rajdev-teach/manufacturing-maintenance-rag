@@ -1,11 +1,12 @@
 """Public HTTP contract for the manufacturing maintenance RAG service."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class QueryRequest(BaseModel):
-    question: str = Field(max_length=1000, description="Maintenance question to answer")
-    top_k: int = Field(default=4, ge=1, le=10, description="Maximum retrieved chunks")
+    model_config = ConfigDict(extra="forbid")
+    question: str = Field(strict=True, max_length=1000, description="Maintenance question to answer")
+    top_k: int = Field(default=4, strict=True, ge=1, le=10, description="Maximum retrieved chunks")
 
 
 class SourceCitation(BaseModel):
@@ -39,3 +40,4 @@ class ServiceInfo(BaseModel):
     model: str
     embedding_model: str | None
     build_commit: str = "development"
+

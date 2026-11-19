@@ -12,6 +12,20 @@ if build_file.exists():
 
 from app.main import create_app
 from app.web import attach_web
+from app.public_security import PublicDemoSecurity
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
-app = create_app()
+app = create_app(expose_docs=False)
 attach_web(app)
+app.add_middleware(PublicDemoSecurity, trust_vercel_proxy=os.getenv("VERCEL") == "1")
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request, error):
+    # Avoid reflecting user-supplied question contents in validation responses.
+    return JSONResponse(status_code=422, content={"detail": [
+        {"loc": list(item["loc"]), "msg": item["msg"], "type": item["type"]}
+        for item in error.errors()
+    ]})
+

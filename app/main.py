@@ -20,7 +20,7 @@ from app.tracking import InferenceTracker
 logger = logging.getLogger(__name__)
 
 
-def create_app() -> FastAPI:
+def create_app(*, expose_docs: bool = True) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         settings = load_settings()
@@ -40,6 +40,9 @@ def create_app() -> FastAPI:
         version=os.getenv("SERVICE_VERSION", "1.0.0"),
         description="Grounded maintenance answers with source citations and MLflow inference tracking.",
         lifespan=lifespan,
+        docs_url="/docs" if expose_docs else None,
+        redoc_url="/redoc" if expose_docs else None,
+        openapi_url="/openapi.json" if expose_docs else None,
     )
 
     @app.get("/health")
@@ -112,3 +115,4 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+

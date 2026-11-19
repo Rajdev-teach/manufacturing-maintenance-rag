@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "vercel-dist"
 MODULES = (
     "__init__.py", "main.py", "config.py", "azure_config.py", "service.py",
-    "schemas.py", "tracking.py", "corpus.py", "local_rag.py", "web.py",
+    "schemas.py", "tracking.py", "corpus.py", "local_rag.py", "web.py", "public_security.py",
 )
 
 
@@ -40,3 +40,4 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--commit", default=os.getenv("GITHUB_SHA", "development"))
     build(parser.parse_args().commit)
+
