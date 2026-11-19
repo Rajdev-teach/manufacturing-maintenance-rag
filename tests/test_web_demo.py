@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 import unittest
 from unittest.mock import patch
 
@@ -57,6 +58,12 @@ with TestClient(app) as client:
                 backend="local", model="tf-idf-extractive-v1", version="1", top_k=4, latency_ms=1,
             )
         self.assertEqual(result, "unavailable")
+
+    def test_vercel_installs_the_declared_runtime_dependencies(self):
+        directory = ROOT / "deploy" / "vercel"
+        project = tomllib.loads((directory / "pyproject.toml").read_text())
+        requirements = (directory / "requirements.txt").read_text().splitlines()
+        self.assertEqual(set(project["project"]["dependencies"]), set(requirements))
 
 
 if __name__ == "__main__":
