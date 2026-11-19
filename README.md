@@ -8,6 +8,8 @@ The `azure` backend implements the **End-to-End Enterprise RAG Deployment on Azu
 
 ## Maintenance Atlas web demo on Vercel
 
+**Live demo:** https://maintenance-atlas.vercel.app/
+
 `web/` provides a responsive question interface, supporting passages, clear out-of-scope refusals, and a browsable six-document library. The public release runs the **actual Python local backend** through FastAPI: TF-IDF retrieval and extractive passages, without OpenAI/Azure calls, API keys, or MLflow tracking. These curated learning materials are not facility-specific operating procedures. Questions are sent to the demo service to answer, but the application does not save query history or send it to MLflow.
 
 Build and verify the slim, self-contained Vercel upload:
